@@ -23,3 +23,9 @@ export const staffanyTheme = createTheme({
     turqouise: STAFFANY_TURQOISE,
   },
 });
+
+type StaffAnyTheme = typeof staffanyTheme;
+
+declare module "@material-ui/core" {
+  interface Theme extends StaffAnyTheme {}
+}

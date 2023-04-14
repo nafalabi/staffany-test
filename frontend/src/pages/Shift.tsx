@@ -1,4 +1,4 @@
-import React, { FunctionComponent, useEffect, useState } from "react";
+import React, { FunctionComponent, useEffect, useMemo, useState } from "react";
 import Grid from "@material-ui/core/Grid";
 import Card from "@material-ui/core/Card";
 import CardContent from "@material-ui/core/CardContent";
@@ -11,10 +11,19 @@ import DeleteIcon from "@material-ui/icons/Delete";
 import EditIcon from "@material-ui/icons/Edit";
 import Fab from "@material-ui/core/Fab";
 import AddIcon from "@material-ui/icons/Add";
-import { useHistory } from "react-router-dom";
+import { useHistory, useLocation } from "react-router-dom";
 import ConfirmDialog from "../components/ConfirmDialog";
 import Alert from "@material-ui/lab/Alert";
 import { Link as RouterLink } from "react-router-dom";
+import { Box, Button, Typography } from "@material-ui/core";
+import WeekPicker from "../components/WeekPicker";
+import {
+  formatDate,
+  getEndOfWeek,
+  getStartOfWeek,
+  parseDate,
+} from "../helper/date/datehelper";
+import { CheckCircleOutline } from "@material-ui/icons";
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -24,8 +33,25 @@ const useStyles = makeStyles((theme) => ({
     position: "absolute",
     bottom: 40,
     right: 40,
-    backgroundColor: 'white',
-    color: theme.color.turquoise
+    backgroundColor: "white",
+    color: theme.color.turquoise,
+  },
+  publishedWeekInfo: {
+    color: theme.color.turqouise,
+  },
+  customOutlinedButton: {
+    color: theme.color.turqouise,
+    borderColor: theme.color.turqouise,
+    "&:hover": {
+      color: theme.color.turqouise,
+      borderColor: theme.color.turqouise,
+    },
+  },
+  customContainedButton: {
+    backgroundColor: theme.color.turqouise,
+    "&:hover": {
+      backgroundColor: theme.color.turqouise,
+    },
   },
 }));
 
@@ -54,9 +80,58 @@ const ActionButton: FunctionComponent<ActionButtonProps> = ({
   );
 };
 
+const useFilterData = () => {
+  const history = useHistory();
+  const { search, pathname } = useLocation();
+
+  const query = useMemo(() => {
+    const searchParams = new URLSearchParams(search);
+    return {
+      startOfWeek: searchParams.get("startOfWeek"),
+    };
+  }, [search]);
+
+  const filterData = useMemo(() => {
+    const startOfWeek = query.startOfWeek;
+
+    const startDate = startOfWeek
+      ? getStartOfWeek(parseDate(startOfWeek))
+      : getStartOfWeek(new Date());
+
+    const endDate = getEndOfWeek(startDate);
+
+    return {
+      startDate,
+      endDate,
+    };
+  }, [query]);
+
+  const handleUpdateQuery = (update: Partial<typeof query>) => {
+    const newQuery = {
+      ...query,
+      ...update,
+    } as Record<string, string>;
+    const searchParams = new URLSearchParams(newQuery);
+    history.replace(pathname + "?" + searchParams.toString());
+  };
+
+  return {
+    filterData,
+    query,
+    handleUpdateQuery,
+  };
+};
+
 const Shift = () => {
   const classes = useStyles();
   const history = useHistory();
+
+  const { filterData, handleUpdateQuery } = useFilterData();
+  const [weekPublishedDate, setWeekPublishedDate] = useState<Date | null>(
+    // new Date()
+    null
+  );
+  const isWeekPublished = Boolean(weekPublishedDate);
 
   const [rows, setRows] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -157,6 +232,54 @@ const Shift = () => {
             ) : (
               <></>
             )}
+            <Box
+              display="flex"
+              alignItems="center"
+              justifyContent="space-between"
+            >
+              <WeekPicker
+                glow={isWeekPublished}
+                startDate={filterData.startDate}
+                endDate={filterData.endDate}
+                onChange={(startDate, endDate) => {
+                  handleUpdateQuery({
+                    startOfWeek: formatDate(startDate),
+                  });
+                }}
+              />
+              <Box display="flex" gridGap="0.5rem" alignItems="center">
+                {weekPublishedDate && (
+                  <>
+                    <CheckCircleOutline className={classes.publishedWeekInfo} />
+                    <Typography
+                      variant="body2"
+                      className={classes.publishedWeekInfo}
+                    >
+                      Week published on{" "}
+                      {formatDate(weekPublishedDate, "dd MMM yyyy, hh:mm aa")}
+                    </Typography>
+                  </>
+                )}
+                <Button
+                  variant="outlined"
+                  color="primary"
+                  className={classes.customOutlinedButton}
+                  onClick={() => history.push("/shift/add")}
+                  disabled={isWeekPublished}
+                >
+                  Add Shift
+                </Button>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  className={classes.customContainedButton}
+                  onClick={() => alert("publish")}
+                  disabled={isWeekPublished}
+                >
+                  Publish
+                </Button>
+              </Box>
+            </Box>
             <DataTable
               title="Shifts"
               columns={columns}
