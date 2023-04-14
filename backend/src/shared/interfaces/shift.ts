@@ -3,6 +3,13 @@ export interface IFindShift {
   endDate: string;
 }
 
+export interface ICheckShiftExist {
+  date: string;
+  startTime: string;
+  endTime: string;
+  id?: string;
+}
+
 export interface ICreateShift {
   name: string;
   date: string;

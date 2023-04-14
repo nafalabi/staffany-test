@@ -1,5 +1,5 @@
 import * as shiftRepository from "../database/default/repository/shiftRepository";
-import { Between, FindManyOptions, FindOneOptions } from "typeorm";
+import { Between, FindManyOptions, FindOneOptions, LessThanOrEqual, MoreThanOrEqual, Not } from "typeorm";
 import Shift from "../database/default/entity/shift";
 import { ICreateShift, IFindShift, IUpdateShift } from "../shared/interfaces";
 
@@ -26,6 +26,14 @@ export const create = async (payload: ICreateShift): Promise<Shift> => {
   shift.startTime = payload.startTime;
   shift.endTime = payload.endTime;
 
+  const isExist = await shiftRepository.checkExist({
+    date: shift.date,
+    endTime: shift.endTime,
+    startTime: shift.startTime,
+  });
+
+  if (isExist) throw new Error("Shift is overlapping with another shift");
+
   return shiftRepository.create(shift);
 };
 
@@ -33,6 +41,15 @@ export const updateById = async (
   id: string,
   payload: IUpdateShift
 ): Promise<Shift> => {
+  const isExist = await shiftRepository.checkExist({
+    date: payload.date,
+    endTime: payload.endTime,
+    startTime: payload.startTime,
+    id,
+  });
+
+  if (isExist) throw new Error("Shift is overlapping with another shift");
+
   return shiftRepository.updateById(id, {
     ...payload,
   });
