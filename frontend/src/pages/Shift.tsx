@@ -156,7 +156,9 @@ const Shift = () => {
       try {
         setIsLoading(true);
         setErrMsg("");
-        const { results } = await getShifts();
+        const strStartDate = formatDate(filterData.startDate);
+        const strEndDate = formatDate(filterData.endDate);
+        const { results } = await getShifts(strStartDate, strEndDate);
         setRows(results);
       } catch (error) {
         const message = getErrorMessage(error);
@@ -167,7 +169,7 @@ const Shift = () => {
     };
 
     getData();
-  }, []);
+  }, [filterData]);
 
   const columns = [
     {
