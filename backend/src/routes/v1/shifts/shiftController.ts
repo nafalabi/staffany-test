@@ -3,6 +3,7 @@ import * as shiftUsecase from "../../../usecases/shiftUsecase";
 import { errorHandler } from "../../../shared/functions/error";
 import {
   ICreateShift,
+  IFindShift,
   ISuccessResponse,
   IUpdateShift,
 } from "../../../shared/interfaces";
@@ -13,7 +14,7 @@ const logger = moduleLogger("shiftController");
 export const find = async (req: Request, h: ResponseToolkit) => {
   logger.info("Find shifts");
   try {
-    const filter = req.query;
+    const filter = req.query as IFindShift;
     const data = await shiftUsecase.find(filter);
     const res: ISuccessResponse = {
       statusCode: 200,

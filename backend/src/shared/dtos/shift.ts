@@ -2,6 +2,11 @@ import Joi from 'joi';
 
 const timeRegex = /([01]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?/;
 
+export const findShiftDto = Joi.object({
+  startDate: Joi.date().required(),
+  endDate: Joi.date().required(),
+});
+
 export const createShiftDto = Joi.object({
   name: Joi.string().required(),
   date: Joi.date().required(),

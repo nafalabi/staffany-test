@@ -1,9 +1,14 @@
 import * as shiftRepository from "../database/default/repository/shiftRepository";
-import { FindManyOptions, FindOneOptions } from "typeorm";
+import { Between, FindManyOptions, FindOneOptions } from "typeorm";
 import Shift from "../database/default/entity/shift";
-import { ICreateShift, IUpdateShift } from "../shared/interfaces";
+import { ICreateShift, IFindShift, IUpdateShift } from "../shared/interfaces";
 
-export const find = async (opts: FindManyOptions<Shift>): Promise<Shift[]> => {
+export const find = async (query: IFindShift): Promise<Shift[]> => {
+  const opts: FindManyOptions<Shift> = {
+    where: {
+      date: Between(query.startDate, query.endDate),
+    }
+  };
   return shiftRepository.find(opts);
 };
 
