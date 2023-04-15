@@ -9,7 +9,7 @@ import DataTable from "react-data-table-component";
 import IconButton from "@material-ui/core/IconButton";
 import DeleteIcon from "@material-ui/icons/Delete";
 import EditIcon from "@material-ui/icons/Edit";
-import { useHistory, useLocation } from "react-router-dom";
+import { useHistory } from "react-router-dom";
 import ConfirmDialog from "../components/ConfirmDialog";
 import Alert from "@material-ui/lab/Alert";
 import { Link as RouterLink } from "react-router-dom";
@@ -27,6 +27,7 @@ import {
   getPublishedWeekStatus,
 } from "../helper/api/publishedWeek";
 import { parseISO } from "date-fns";
+import useQueryData from "../hooks/useQueryData";
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -91,53 +92,25 @@ const ActionButton: FunctionComponent<ActionButtonProps> = ({
   );
 };
 
-const useFilterData = () => {
+const Shift = () => {
+  const classes = useStyles();
   const history = useHistory();
-  const { search, pathname } = useLocation();
 
-  const query = useMemo(() => {
-    const searchParams = new URLSearchParams(search);
-    return {
-      startOfWeek: searchParams.get("startOfWeek"),
-    };
-  }, [search]);
+  const { query, handleUpdateQuery } = useQueryData(["startOfWeek"]);
 
   const filterData = useMemo(() => {
     const startOfWeek = query.startOfWeek;
-
-    const startDate = startOfWeek
-      ? getStartOfWeek(parseDate(startOfWeek))
-      : getStartOfWeek(new Date());
-
-    const endDate = getEndOfWeek(startDate);
-
+    let parsedDate: Date = parseDate(startOfWeek);
+    const isValid = parsedDate instanceof Date && !isNaN(parsedDate.getTime());
+    if (!isValid) parsedDate = new Date(); // fallback to current date
+    const startDate = getStartOfWeek(parsedDate);
+    const endDate = getEndOfWeek(parsedDate);
     return {
       startDate,
       endDate,
     };
   }, [query]);
 
-  const handleUpdateQuery = (update: Partial<typeof query>) => {
-    const newQuery = {
-      ...query,
-      ...update,
-    } as Record<string, string>;
-    const searchParams = new URLSearchParams(newQuery);
-    history.replace(pathname + "?" + searchParams.toString());
-  };
-
-  return {
-    filterData,
-    query,
-    handleUpdateQuery,
-  };
-};
-
-const Shift = () => {
-  const classes = useStyles();
-  const history = useHistory();
-
-  const { filterData, handleUpdateQuery } = useFilterData();
   const [weekPublishedDate, setWeekPublishedDate] = useState<Date | null>(null);
   const isWeekPublished = Boolean(weekPublishedDate);
 
