@@ -115,6 +115,7 @@ const Shift = () => {
   const isWeekPublished = Boolean(weekPublishedDate);
 
   const [rows, setRows] = useState([]);
+  const isRowEmpty = rows.length === 0;
   const [isLoading, setIsLoading] = useState(false);
   const [errMsg, setErrMsg] = useState("");
 
@@ -298,7 +299,7 @@ const Shift = () => {
                   color="primary"
                   className={classes.customContainedButton}
                   onClick={onPublishClick}
-                  disabled={isWeekPublished}
+                  disabled={isWeekPublished || isRowEmpty}
                 >
                   Publish
                 </Button>
