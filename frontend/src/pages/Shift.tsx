@@ -22,7 +22,10 @@ import {
   parseDate,
 } from "../helper/date/datehelper";
 import { CheckCircleOutline } from "@material-ui/icons";
-import { doPublishWeek, getPublishedWeekStatus } from "../helper/api/publishedWeek";
+import {
+  doPublishWeek,
+  getPublishedWeekStatus,
+} from "../helper/api/publishedWeek";
 import { parseISO } from "date-fns";
 
 const useStyles = makeStyles((theme) => ({
@@ -165,7 +168,7 @@ const Shift = () => {
 
   const onClosePublishDialog = () => {
     setShowPublishConfirm(false);
-  }
+  };
 
   useEffect(() => {
     const getData = async () => {
@@ -215,7 +218,11 @@ const Shift = () => {
     {
       name: "Actions",
       cell: (row: any) => (
-        <ActionButton id={row.id} onDelete={() => onDeleteClick(row.id)} disabled={isWeekPublished} />
+        <ActionButton
+          id={row.id}
+          onDelete={() => onDeleteClick(row.id)}
+          disabled={isWeekPublished}
+        />
       ),
     },
   ];
