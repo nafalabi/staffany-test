@@ -1,9 +1,8 @@
-import { Column, Entity, Index, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, Index, PrimaryGeneratedColumn, Unique } from "typeorm";
 import { BaseTimestamp } from "./baseTimestamp";
 
 @Entity()
-@Index(["startDate", "endDate"])
-@Index(["startDate"])
+@Unique(["startDate", "endDate"])
 export default class PublishedWeek extends BaseTimestamp {
   @PrimaryGeneratedColumn("uuid")
   id: string;

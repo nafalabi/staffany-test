@@ -41,6 +41,7 @@ export const findOne = async (
 };
 
 export const checkExist = async (query: ICheckShiftExist) => {
+  logger.info("Check exists")
   const repository = getRepository(Shift);
 
   let qb = repository.createQueryBuilder('s')

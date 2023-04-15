@@ -1,10 +1,10 @@
 import * as publishedWeekRepository from "../database/default/repository/publishedWeekRepository";
-import { FindManyOptions, FindOneOptions } from "typeorm";
+import { FindConditions, FindManyOptions, FindOneOptions } from "typeorm";
 import PublishedWeek from "../database/default/entity/publishedWeek";
 import { ICreatePublishedWeek } from "../shared/interfaces";
 
-export const find = async (opts: FindManyOptions<PublishedWeek>): Promise<PublishedWeek[]> => {
-  return publishedWeekRepository.find(opts);
+export const find = async (opts: FindConditions<PublishedWeek>): Promise<PublishedWeek> => {
+  return publishedWeekRepository.findOne(opts);
 };
 
 export const findById = async (
@@ -13,6 +13,10 @@ export const findById = async (
 ): Promise<PublishedWeek> => {
   return publishedWeekRepository.findById(id, opts);
 };
+
+export const findByDate = async (date: string) => {
+  return publishedWeekRepository.findByDate(date);
+}
 
 export const create = async (payload: ICreatePublishedWeek): Promise<PublishedWeek> => {
   const shift = new PublishedWeek();

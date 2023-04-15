@@ -4,6 +4,8 @@ import {
   FindManyOptions,
   FindOneOptions,
   FindConditions,
+  LessThanOrEqual,
+  MoreThanOrEqual,
 } from "typeorm";
 import moduleLogger from "../../../shared/functions/logger";
 import PublishedWeek from "../entity/publishedWeek";
@@ -34,6 +36,16 @@ export const findOne = async (
   logger.info("Find one");
   const repository = getRepository(PublishedWeek);
   const data = await repository.findOne(where, opts);
+  return data;
+};
+
+export const findByDate = async (date: string) => {
+  logger.info('Find by date');
+  const repository = getRepository(PublishedWeek);
+  const data = await repository.findOne({
+    startDate: LessThanOrEqual(date),
+    endDate: MoreThanOrEqual(date),
+  });
   return data;
 };
 

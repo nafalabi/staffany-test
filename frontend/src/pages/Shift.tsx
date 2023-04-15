@@ -9,8 +9,6 @@ import DataTable from "react-data-table-component";
 import IconButton from "@material-ui/core/IconButton";
 import DeleteIcon from "@material-ui/icons/Delete";
 import EditIcon from "@material-ui/icons/Edit";
-import Fab from "@material-ui/core/Fab";
-import AddIcon from "@material-ui/icons/Add";
 import { useHistory, useLocation } from "react-router-dom";
 import ConfirmDialog from "../components/ConfirmDialog";
 import Alert from "@material-ui/lab/Alert";
@@ -24,6 +22,8 @@ import {
   parseDate,
 } from "../helper/date/datehelper";
 import { CheckCircleOutline } from "@material-ui/icons";
+import { doPublishWeek, getPublishedWeekStatus } from "../helper/api/publishedWeek";
+import { parseISO } from "date-fns";
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -57,10 +57,12 @@ const useStyles = makeStyles((theme) => ({
 
 interface ActionButtonProps {
   id: string;
+  disabled?: boolean;
   onDelete: () => void;
 }
 const ActionButton: FunctionComponent<ActionButtonProps> = ({
   id,
+  disabled,
   onDelete,
 }) => {
   return (
@@ -70,10 +72,16 @@ const ActionButton: FunctionComponent<ActionButtonProps> = ({
         aria-label="delete"
         component={RouterLink}
         to={`/shift/${id}/edit`}
+        disabled={disabled}
       >
         <EditIcon fontSize="small" />
       </IconButton>
-      <IconButton size="small" aria-label="delete" onClick={() => onDelete()}>
+      <IconButton
+        size="small"
+        aria-label="delete"
+        onClick={() => onDelete()}
+        disabled={disabled}
+      >
         <DeleteIcon fontSize="small" />
       </IconButton>
     </div>
@@ -127,10 +135,7 @@ const Shift = () => {
   const history = useHistory();
 
   const { filterData, handleUpdateQuery } = useFilterData();
-  const [weekPublishedDate, setWeekPublishedDate] = useState<Date | null>(
-    // new Date()
-    null
-  );
+  const [weekPublishedDate, setWeekPublishedDate] = useState<Date | null>(null);
   const isWeekPublished = Boolean(weekPublishedDate);
 
   const [rows, setRows] = useState([]);
@@ -140,6 +145,9 @@ const Shift = () => {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<boolean>(false);
   const [deleteLoading, setDeleteLoading] = useState<boolean>(false);
+
+  const [showPublishConfirm, setShowPublishConfirm] = useState<boolean>(false);
+  const [publishLoading, setPublishLoading] = useState<boolean>(false);
 
   const onDeleteClick = (id: string) => {
     setSelectedId(id);
@@ -151,6 +159,14 @@ const Shift = () => {
     setShowDeleteConfirm(false);
   };
 
+  const onPublishClick = () => {
+    setShowPublishConfirm(true);
+  };
+
+  const onClosePublishDialog = () => {
+    setShowPublishConfirm(false);
+  }
+
   useEffect(() => {
     const getData = async () => {
       try {
@@ -158,8 +174,12 @@ const Shift = () => {
         setErrMsg("");
         const strStartDate = formatDate(filterData.startDate);
         const strEndDate = formatDate(filterData.endDate);
-        const { results } = await getShifts(strStartDate, strEndDate);
-        setRows(results);
+        const [{ results: shifts }, { results: weekData }] = await Promise.all([
+          getShifts(strStartDate, strEndDate),
+          getPublishedWeekStatus(strStartDate, strEndDate),
+        ]);
+        setRows(shifts);
+        setWeekPublishedDate(weekData ? parseISO(weekData?.createdAt) : null);
       } catch (error) {
         const message = getErrorMessage(error);
         setErrMsg(message);
@@ -195,7 +215,7 @@ const Shift = () => {
     {
       name: "Actions",
       cell: (row: any) => (
-        <ActionButton id={row.id} onDelete={() => onDeleteClick(row.id)} />
+        <ActionButton id={row.id} onDelete={() => onDeleteClick(row.id)} disabled={isWeekPublished} />
       ),
     },
   ];
@@ -224,13 +244,33 @@ const Shift = () => {
     }
   };
 
+  const publishWeek = async () => {
+    try {
+      setPublishLoading(true);
+      setErrMsg("");
+      await doPublishWeek({
+        startDate: formatDate(filterData.startDate),
+        endDate: formatDate(filterData.endDate),
+      });
+      setWeekPublishedDate(new Date());
+    } catch (error) {
+      const message = getErrorMessage(error);
+      setErrMsg(message);
+    } finally {
+      setPublishLoading(false);
+      onClosePublishDialog();
+    }
+  };
+
   return (
     <Grid container spacing={3}>
       <Grid item xs={12}>
         <Card className={classes.root}>
           <CardContent>
             {errMsg.length > 0 ? (
-              <Alert severity="error">{errMsg}</Alert>
+              <Box clone marginBottom="0.5rem">
+                <Alert severity="error">{errMsg}</Alert>
+              </Box>
             ) : (
               <></>
             )}
@@ -253,13 +293,15 @@ const Shift = () => {
                 {weekPublishedDate && (
                   <>
                     <CheckCircleOutline className={classes.publishedWeekInfo} />
-                    <Typography
-                      variant="body2"
-                      className={classes.publishedWeekInfo}
-                    >
-                      Week published on{" "}
-                      {formatDate(weekPublishedDate, "dd MMM yyyy, hh:mm aa")}
-                    </Typography>
+                    <Box clone marginRight="0.5rem!important">
+                      <Typography
+                        variant="body2"
+                        className={classes.publishedWeekInfo}
+                      >
+                        Week published on{" "}
+                        {formatDate(weekPublishedDate, "dd MMM yyyy, hh:mm aa")}
+                      </Typography>
+                    </Box>
                   </>
                 )}
                 <Button
@@ -275,7 +317,7 @@ const Shift = () => {
                   variant="contained"
                   color="primary"
                   className={classes.customContainedButton}
-                  onClick={() => alert("publish")}
+                  onClick={onPublishClick}
                   disabled={isWeekPublished}
                 >
                   Publish
@@ -292,14 +334,6 @@ const Shift = () => {
           </CardContent>
         </Card>
       </Grid>
-      <Fab
-        size="medium"
-        aria-label="add"
-        className={classes.fab}
-        onClick={() => history.push("/shift/add")}
-      >
-        <AddIcon />
-      </Fab>
       <ConfirmDialog
         title="Delete Confirmation"
         description={`Do you want to delete this data ?`}
@@ -307,6 +341,14 @@ const Shift = () => {
         open={showDeleteConfirm}
         onYes={deleteDataById}
         loading={deleteLoading}
+      />
+      <ConfirmDialog
+        title="Publish Confirmation"
+        description="Are you sure to publish this week's shifts ?"
+        onClose={onClosePublishDialog}
+        open={showPublishConfirm}
+        onYes={publishWeek}
+        loading={publishLoading}
       />
     </Grid>
   );
